@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 import Font as Font
 import time
 import datetime
+import mashiro
 
 RS_p = 7
 RW_p = 8
@@ -220,4 +221,15 @@ def command(value, mode):
     time.sleep(EWAIT)
     GPIO.output(E_p, GPIO.LOW)
 
-
+def drowMashiro():
+    for page in range(8):
+        for addr in range(64):
+            if addr < 32:
+                SelectIC(1)
+                SetPage(page)
+                SetAddress(addr + 32)
+            else:
+                SelectIC(2)
+                SetPage(page)
+                SetAddress(addr - 32)
+            WriteData(mashiro.Array[page][addr])
