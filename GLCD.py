@@ -15,8 +15,13 @@ SetCol = 0
 EWAIT = 0.0000005
 
 def PinsInit(rst, rs, rw, enable, cs1, cs2, d0, d1, d2, d3, d4, d5, d6, d7):
-    GPIO.setmode(GPIO.BCM)
-
+    global RS_p
+    global RW_p
+    global E_p
+    global CS1_p
+    global CS2_p
+    global DATA_p
+    
     #データピンの番号セット
     DATA_p[0] = d0
     DATA_p[1] = d1
