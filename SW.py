@@ -40,11 +40,7 @@ def PinsInit(x, y, z, a, b, c, d):
 
 def SW_Sample():
     col = 1
-    aStore = 1
-    bStore = 1
-    cStore = 1
-    dStore = 1
-    colStore = 0
+    swState = [0] * 12
     while True:
         if col == 1:
             GPIO.output(X_p, GPIO.LOW)
@@ -58,110 +54,139 @@ def SW_Sample():
             GPIO.output(X_p, GPIO.HIGH)
             GPIO.output(Y_p, GPIO.HIGH)
             GPIO.output(Z_p, GPIO.LOW)
-        if dStore == 1 and GPIO.input(D_p) == 0:
+
+        # 1押下
+        if swState[1] == 0 and col == 1 and GPIO.input(D_p) == 0:
+            # チャタリング回避
             time.sleep(0.05)
             if GPIO.input(D_p) == 0:
-                if col == 1 and colStore == 0:
-                    print("push 1")
-                    colStore = 1
-                elif col == 2 and colStore == 0:
-                    print("push 2")
-                    colStore = 2
-                elif col == 3 and colStore == 0:
-                    print("push 3")
-                    colStore = 3
-                dStore = 0
-        elif dStore == 0 and GPIO.input(D_p) == 1:
-            if col == 1 and colStore == 1:
-                print("release 1")
-                colStore = 0
-                dStore = 1
-            elif col == 2 and colStore == 2:
-                print("release 2")
-                colStore = 0
-                dStore = 1
-            elif col == 3 and colStore == 3:
-                print("release 3")
-                colStore = 0
-                dStore = 1
-        elif cStore == 1 and GPIO.input(C_p) == 0:
+                print("push 1")
+                swState[1] = 1
+        # 1押下戻し
+        elif swState[1] == 1 and col == 1 and GPIO.input(D_p) == 1:
+            print("release 1")
+            swState[1] = 0
+        # 2押下
+        if swState[2] == 0 and col == 2 and GPIO.input(D_p) == 0:
+            # チャタリング回避
+            time.sleep(0.05)
+            if GPIO.input(D_p) == 0:
+                print("push 2")
+                swState[2] = 1
+        # 2押下戻し
+        elif swState[2] == 1 and col == 2 and GPIO.input(D_p) == 1:
+            print("release 2")
+            swState[2] = 0
+        # 3押下
+        if swState[3] == 0 and col == 3 and GPIO.input(D_p) == 0:
+            # チャタリング回避
+            time.sleep(0.05)
+            if GPIO.input(D_p) == 0:
+                print("push 3")
+                swState[3] = 1
+        # 3押下戻し
+        elif swState[3] == 1 and col == 3 and GPIO.input(D_p) == 1:
+            print("release 3")
+            swState[3] = 0
+        # 4押下
+        if swState[4] == 0 and col == 1 and GPIO.input(C_p) == 0:
+            # チャタリング回避
             time.sleep(0.05)
             if GPIO.input(C_p) == 0:
-                if col == 1 and colStore == 0:
-                    print("push 4")
-                    colStore = 1
-                elif col == 2 and colStore == 0:
-                    print("push 5")
-                    colStore = 2
-                elif col == 3 and colStore == 0:
-                    print("push 6")
-                    colStore = 3
-                cStore = 0
-        elif cStore == 0 and GPIO.input(C_p) == 1:
-            if col == 1 and colStore == 1:
-                print("release 4")
-                colStore = 0
-                cStore = 1
-            elif col == 2 and colStore == 2:
-                print("release 5")
-                colStore = 0
-                cStore = 1
-            elif col == 3 and colStore == 3:
-                print("release 6")
-                colStore = 0
-                cStore = 1
-        elif bStore == 1 and GPIO.input(B_p) == 0:
+                print("push 4")
+                swState[4] = 1
+        # 4押下戻し
+        elif swState[4] == 1 and col == 1 and GPIO.input(C_p) == 1:
+            print("release 4")
+            swState[4] = 0
+        # 5押下
+        if swState[5] == 0 and col == 2 and GPIO.input(C_p) == 0:
+            # チャタリング回避
+            time.sleep(0.05)
+            if GPIO.input(C_p) == 0:
+                print("push 5")
+                swState[5] = 1
+        # 5押下戻し
+        elif swState[5] == 1 and col == 2 and GPIO.input(C_p) == 1:
+            print("release 5")
+            swState[5] = 0
+        # 6押下
+        if swState[6] == 0 and col == 3 and GPIO.input(C_p) == 0:
+            # チャタリング回避
+            time.sleep(0.05)
+            if GPIO.input(C_p) == 0:
+                print("push 6")
+                swState[6] = 1
+        # 6押下戻し
+        elif swState[6] == 1 and col == 3 and GPIO.input(C_p) == 1:
+            print("release 6")
+            swState[6] = 0
+        # 7押下
+        if swState[7] == 0 and col == 1 and GPIO.input(B_p) == 0:
+            # チャタリング回避
             time.sleep(0.05)
             if GPIO.input(B_p) == 0:
-                if col == 1 and colStore == 0:
-                    print("push 7")
-                    colStore = 1
-                elif col == 2 and colStore == 0:
-                    print("push 8")
-                    colStore = 2
-                elif col == 3 and colStore == 0:
-                    print("push 9")
-                    colStore = 3
-                bStore = 0
-        elif bStore == 0 and GPIO.input(B_p) == 1:
-            if col == 1 and colStore == 1:
-                print("release 7")
-                colStore = 0
-                bStore = 1
-            elif col == 2 and colStore == 2:
-                print("release 8")
-                colStore = 0
-                bStore = 1
-            elif col == 3 and colStore == 3:
-                print("release 9")
-                colStore = 0
-                bStore = 1
-        elif aStore == 1 and GPIO.input(A_p) == 0:
+                print("push 7")
+                swState[7] = 1
+        # 7押下戻し
+        elif swState[7] == 1 and col == 1 and GPIO.input(B_p) == 1:
+            print("release 7")
+            swState[7] = 0
+        # 8押下
+        if swState[8] == 0 and col == 2 and GPIO.input(B_p) == 0:
+            # チャタリング回避
+            time.sleep(0.05)
+            if GPIO.input(B_p) == 0:
+                print("push 8")
+                swState[8] = 1
+        # 8押下戻し
+        elif swState[8] == 1 and col == 2 and GPIO.input(B_p) == 1:
+            print("release 8")
+            swState[8] = 0
+        # 9押下
+        if swState[9] == 0 and col == 3 and GPIO.input(B_p) == 0:
+            # チャタリング回避
+            time.sleep(0.05)
+            if GPIO.input(B_p) == 0:
+                print("push 9")
+                swState[9] = 1
+        # 9押下戻し
+        elif swState[9] == 1 and col == 3 and GPIO.input(B_p) == 1:
+            print("release 9")
+            swState[9] = 0
+        # *押下
+        if swState[10] == 0 and col == 1 and GPIO.input(A_p) == 0:
+            # チャタリング回避
             time.sleep(0.05)
             if GPIO.input(A_p) == 0:
-                if col == 1 and colStore == 0:
-                    print("push *")
-                    colStore = 1
-                elif col == 2 and colStore == 0:
-                    print("push 0")
-                    colStore = 2
-                elif col == 3 and colStore == 0:
-                    print("push #")
-                    colStore = 3
-                aStore = 0
-        elif aStore == 0 and GPIO.input(A_p) == 1:
-            if col == 1 and colStore == 1:
-                print("release *")
-                colStore = 0
-                aStore = 1
-            elif col == 2 and colStore == 2:
-                print("release 0")
-                colStore = 0
-                aStore = 1
-            elif col == 3 and colStore == 3:
-                print("release #")
-                colStore = 0
-                aStore = 1
+                print("push *")
+                swState[10] = 1
+        # *押下戻し
+        elif swState[10] == 1 and col == 1 and GPIO.input(A_p) == 1:
+            print("release *")
+            swState[10] = 0
+        # 0押下
+        if swState[0] == 0 and col == 2 and GPIO.input(A_p) == 0:
+            # チャタリング回避
+            time.sleep(0.05)
+            if GPIO.input(A_p) == 0:
+                print("push 0")
+                swState[0] = 1
+        # 0押下戻し
+        elif swState[0] == 1 and col == 2 and GPIO.input(A_p) == 1:
+            print("release 0")
+            swState[0] = 0
+        # #押下
+        if swState[11] == 0 and col == 3 and GPIO.input(A_p) == 0:
+            # チャタリング回避
+            time.sleep(0.05)
+            if GPIO.input(A_p) == 0:
+                print("push #")
+                swState[11] = 1
+        # #押下戻し
+        elif swState[11] == 1 and col == 3 and GPIO.input(A_p) == 1:
+            print("release #")
+            swState[11] = 0
 
         col += 1
         if col > 3:
