@@ -14,6 +14,9 @@ def __main__():
     GLCD.GLCDInit()
     GLCD.GLCDDisplayClear()
 
+    SW.PinsInit(21, 22, 23, 24, 25, 26, 27)
+    SW.Start()
+
     roop = 10 * 60 * 60
     try:
         while True:
@@ -35,10 +38,13 @@ def __main__():
             # roop += 1
 
             # GLCD.drowMashiro()
-            SW.PinsInit(21, 22, 23, 24, 25, 26, 27)
-            SW.SW_Sample()
+            key = SW.GetKey()
+            if key != "":
+                print(key)
+
             time.sleep(0.1)
     except KeyboardInterrupt:
+        SW.Stop()
         GLCD.GLCDDisplayClear()
         GPIO.cleanup()
 
