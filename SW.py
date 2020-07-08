@@ -215,3 +215,4 @@ def threadProcess():
         if col > 3:
             col = 1
         
+        time.sleep(0.005)

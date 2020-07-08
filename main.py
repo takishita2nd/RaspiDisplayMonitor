@@ -18,29 +18,43 @@ def __main__():
     SW.Start()
 
     roop = 10 * 60 * 60
+    mode = 1
     try:
         while True:
-            # if roop >= 10 * 60 * 60:
-            #     Weather.RequestAPI()
-            #     weather = Weather.GetWeather()
-            #     temp = Weather.GetTemp()
-            #     roop = 0
-
-            # GLCD.GLCDPuts(1, 0, "Date :")
-            # GLCD.GLCDPuts(10, 8, datetime.datetime.now().strftime('%Y:%m:%d %A'))
-            # GLCD.GLCDPuts(1, 16, "Weather :")
-            # GLCD.GLCDPuts(10,24, weather)
-            # GLCD.GLCDPuts(10,32, "Temp : " + format(temp) + 'C')
-            # GLCD.GLCDPuts(1, 40, "Time : " + datetime.datetime.now().strftime('%H:%M:%S'))
-            # GLCD.GLCDPuts(1, 48, "Humidity    : " + AM2320.GetHum() + '%')
-            # GLCD.GLCDPuts(1, 56, "Temperature : " + AM2320.GetTemp() + 'C')
-
-            # roop += 1
-
-            # GLCD.drowMashiro()
             key = SW.GetKey()
-            if key != "":
-                print(key)
+            if key == "1":
+                GLCD.GLCDDisplayClear()
+                mode += 1
+                if mode > 3:
+                    mode = 1
+
+            if mode == 1:
+                if roop >= 10 * 60 * 60:
+                    Weather.RequestAPI()
+                    weather = Weather.GetWeather()
+                    temp = Weather.GetTemp()
+                    roop = 0
+
+                GLCD.GLCDPuts(1, 0, "Date :")
+                GLCD.GLCDPuts(5, 8, datetime.datetime.now().strftime('%Y:%m:%d %A'))
+                GLCD.GLCDPuts(1, 16, "Weather :")
+                GLCD.GLCDPuts(10,24, weather)
+                GLCD.GLCDPuts(10,32, "Temp : " + format(temp) + 'C')
+                GLCD.GLCDPuts(1, 40, "Time : " + datetime.datetime.now().strftime('%H:%M:%S'))
+                GLCD.GLCDPuts(1, 48, "Humidity    : " + AM2320.GetHum() + '%')
+                GLCD.GLCDPuts(1, 56, "Temperature : " + AM2320.GetTemp() + 'C')
+
+                roop += 1
+            elif mode == 2:
+                cal = calendar.month(datetime.datetime.now().year, datetime.datetime.now().month)
+                cals = cal.split("\n")
+                y = 0
+                for c in cals:
+                    GLCD.GLCDPuts(1, y, c)
+                    y += 8
+            
+            elif mode == 3:
+                GLCD.drowMashiro()
 
             time.sleep(0.1)
     except KeyboardInterrupt:
