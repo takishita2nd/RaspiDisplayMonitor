@@ -14,7 +14,7 @@ def __main__():
     GLCD.GLCDInit()
     GLCD.GLCDDisplayClear()
 
-    SW.PinsInit(21, 22, 23, 24, 25, 26, 27)
+    SW.PinsInit(22)
     SW.Start()
 
     roop = 10 * 60 * 60
@@ -22,7 +22,7 @@ def __main__():
     try:
         while True:
             key = SW.GetKey()
-            if key == "1":
+            if key == "ON":
                 GLCD.GLCDDisplayClear()
                 mode += 1
                 if mode > 3:
@@ -56,7 +56,7 @@ def __main__():
             elif mode == 3:
                 GLCD.drowMashiro()
 
-            time.sleep(0.1)
+            time.sleep(0.2)
     except KeyboardInterrupt:
         SW.Stop()
         GLCD.GLCDDisplayClear()
