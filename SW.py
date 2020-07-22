@@ -32,7 +32,6 @@ def GetKey():
 def threadProcess():
     global Key
 
-    col = 1
     swState = [0]
     while Loop:
 
