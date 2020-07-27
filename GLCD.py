@@ -3,6 +3,7 @@ import Font as Font
 import time
 import datetime
 import mashiro
+import LFont
 
 RS_p = 7
 RW_p = 8
@@ -238,3 +239,28 @@ def drowMashiro():
                 SetPage(page)
                 SetAddress(addr - 32)
             WriteData(mashiro.Array[page][addr])
+
+def drowLargeClock(time):
+    position = 0
+    val = 0
+    for s in time:
+        if s == ':':
+            val = 10
+        else:
+            val = int(s)
+
+        for page in range(6):
+            for addr in range(24):
+                if position + addr < 64:
+                    SelectIC(1)
+                    SetPage(page)
+                    SetAddress(position + addr)
+                else:
+                    SelectIC(2)
+                    SetPage(page)
+                    SetAddress(position + addr - 64)
+                WriteData(LFont.Array[val][page][addr])
+        position += addr
+
+
+            
