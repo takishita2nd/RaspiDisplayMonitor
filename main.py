@@ -1,3 +1,7 @@
+import os
+import sys
+import urllib.parse
+import json
 import RPi.GPIO as GPIO
 import time
 import datetime
@@ -5,7 +9,13 @@ import calendar
 import GLCD
 import AM2320
 import Weather
+import threading
 
+from http.server import BaseHTTPRequestHandler
+from http.server import HTTPServer
+from http import HTTPStatus
+
+PORT = 8000
 sw = False
 
 def __main__():
@@ -19,6 +29,10 @@ def __main__():
 
     roop = 10 * 60 * 60
     mode = 1
+    
+    thread = threading.Thread(target=httpServe)
+    thread.start()
+    
     try:
         while True:
             if sw == True:
@@ -71,5 +85,34 @@ def __main__():
 def callback(channel):
     global sw
     sw = True
+
+def httpServe():
+    handler = StubHttpRequestHandler
+    httpd = HTTPServer(('',PORT),handler)
+    httpd.serve_forever()
+
+class StubHttpRequestHandler(BaseHTTPRequestHandler):
+    server_version = "HTTP Stub/0.1"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def do_GET(self):
+        enc = sys.getfilesystemencoding()
+
+        data = {
+            'datetime' : datetime.datetime.now().strftime('%Y:%m:%d %H:%M:%S'),
+            'temperature': AM2320.GetTemp(),
+            'humidity': AM2320.GetHum(),
+        }
+
+        encoded = json.dumps(data).encode()
+
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-type", "text/html; charset=%s" % enc)
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+
+        self.wfile.write(encoded)     
 
 __main__()
