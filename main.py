@@ -18,8 +18,14 @@ from http import HTTPStatus
 PORT = 8000
 sw = False
 
+Humidity = 0
+Temperature = 0
+
 def __main__():
     global sw
+    global Humidity
+    global Temperature
+
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(22,GPIO.IN) 
     GPIO.add_event_detect(22, GPIO.FALLING, callback=callback, bouncetime=300)
@@ -35,6 +41,9 @@ def __main__():
     
     try:
         while True:
+            Humidity = AM2320.GetHum()
+            Temperature = AM2320.GetTemp()
+
             if sw == True:
                 GLCD.GLCDDisplayClear()
                 mode += 1
@@ -56,15 +65,15 @@ def __main__():
                 GLCD.GLCDPuts(10,24, weather)
                 GLCD.GLCDPuts(10,32, "Temp : " + format(temp) + 'C')
                 GLCD.GLCDPuts(1, 40, "Time : " + datetime.datetime.now().strftime('%H:%M'))
-                GLCD.GLCDPuts(1, 48, "Humidity    : " + AM2320.GetHum() + '%')
-                GLCD.GLCDPuts(1, 56, "Temperature : " + AM2320.GetTemp() + 'C')
+                GLCD.GLCDPuts(1, 48, "Humidity    : " + Humidity + '%')
+                GLCD.GLCDPuts(1, 56, "Temperature : " + Temperature + 'C')
 
                 roop += 1
 
             elif mode == 2:
                 GLCD.drowLargeClock(datetime.datetime.now().strftime('%H:%M'))
-                GLCD.GLCDPuts(1, 48, "Humidity    : " + AM2320.GetHum() + '%')
-                GLCD.GLCDPuts(1, 56, "Temperature : " + AM2320.GetTemp() + 'C')
+                GLCD.GLCDPuts(1, 48, "Humidity    : " + Humidity + '%')
+                GLCD.GLCDPuts(1, 56, "Temperature : " + Temperature + 'C')
 
             elif mode == 3:
                 cal = calendar.month(datetime.datetime.now().year, datetime.datetime.now().month)
@@ -102,8 +111,8 @@ class StubHttpRequestHandler(BaseHTTPRequestHandler):
 
         data = {
             'datetime' : datetime.datetime.now().strftime('%Y:%m:%d %H:%M:%S'),
-            'temperature': AM2320.GetTemp(),
-            'humidity': AM2320.GetHum(),
+            'temperature': Temperature,
+            'humidity': Humidity,
         }
 
         encoded = json.dumps(data).encode()
