@@ -10,6 +10,7 @@ import GLCD
 import AM2320
 import Weather
 import threading
+import subprocess
 
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
@@ -100,6 +101,16 @@ def httpServe():
     httpd = HTTPServer(('',PORT),handler)
     httpd.serve_forever()
 
+def getCPUTemp():
+    args = ['vcgencmd', 'measure_temp']
+    res = ""
+    try:
+        res = subprocess.run(args, stdout=subprocess.PIPE)
+    except:
+        return "Error."
+    return res.stdout.decode().split('=')[1].strip().replace('\'C', '℃')
+
+
 class StubHttpRequestHandler(BaseHTTPRequestHandler):
     server_version = "HTTP Stub/0.1"
 
@@ -113,6 +124,7 @@ class StubHttpRequestHandler(BaseHTTPRequestHandler):
             'datetime' : datetime.datetime.now().strftime('%Y:%m:%d %H:%M:%S'),
             'temperature': Temperature,
             'humidity': Humidity,
+            'cputemp' : getCPUTemp()
         }
 
         encoded = json.dumps(data).encode()
