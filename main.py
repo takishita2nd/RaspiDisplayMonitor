@@ -53,6 +53,11 @@ def __main__():
                 sw = False
 
             if mode == 1:
+                GLCD.drowLargeClock(datetime.datetime.now().strftime('%H:%M'))
+                GLCD.GLCDPuts(1, 48, "Humidity    : " + Humidity + '%')
+                GLCD.GLCDPuts(1, 56, "Temperature : " + Temperature + 'C')
+
+            elif mode == 2:
                 if roop >= 10 * 60 * 60:
                     GLCD.GLCDDisplayClear()
                     Weather.RequestAPI()
@@ -70,11 +75,6 @@ def __main__():
                 GLCD.GLCDPuts(1, 56, "Temperature : " + Temperature + 'C')
 
                 roop += 1
-
-            elif mode == 2:
-                GLCD.drowLargeClock(datetime.datetime.now().strftime('%H:%M'))
-                GLCD.GLCDPuts(1, 48, "Humidity    : " + Humidity + '%')
-                GLCD.GLCDPuts(1, 56, "Temperature : " + Temperature + 'C')
 
             elif mode == 3:
                 cal = calendar.month(datetime.datetime.now().year, datetime.datetime.now().month)
@@ -110,6 +110,15 @@ def getCPUTemp():
         return "Error."
     return res.stdout.decode().split('=')[1].strip().replace('\'C', '℃')
 
+def getGPUTemp():
+    args = ['sudo', '/opt/vc/bin/vcgencmd', 'measure_temp']
+    res = ""
+    try:
+        res = subprocess.run(args, stdout=subprocess.PIPE)
+    except:
+        return "Error."
+    return res.stdout.decode().split('=')[1].strip().replace('\'C', '℃')
+
 
 class StubHttpRequestHandler(BaseHTTPRequestHandler):
     server_version = "HTTP Stub/0.1"
@@ -124,7 +133,8 @@ class StubHttpRequestHandler(BaseHTTPRequestHandler):
             'datetime' : datetime.datetime.now().strftime('%Y:%m:%d %H:%M:%S'),
             'temperature': Temperature,
             'humidity': Humidity,
-            'cputemp' : getCPUTemp()
+            'cputemp' : getCPUTemp(),
+            'gputemp' : getGPUTemp()
         }
 
         encoded = json.dumps(data).encode()
