@@ -21,6 +21,14 @@ sw = False
 
 Humidity = 0
 Temperature = 0
+mode = 1
+lock = threading.Lock()
+
+def pushButton():
+    global mode
+    mode += 1
+    if mode > 4:
+        mode = 1
 
 def __main__():
     global sw
@@ -35,21 +43,19 @@ def __main__():
     GLCD.GLCDDisplayClear()
 
     roop = 10 * 60 * 60
-    mode = 1
     
     thread = threading.Thread(target=httpServe)
     thread.start()
     
     try:
         while True:
+            lock.acquire()
             Humidity = AM2320.GetHum()
             Temperature = AM2320.GetTemp()
 
             if sw == True:
                 GLCD.GLCDDisplayClear()
-                mode += 1
-                if mode > 4:
-                    mode = 1
+                pushButton()
                 sw = False
 
             if mode == 1:
@@ -87,6 +93,7 @@ def __main__():
             elif mode == 4:
                 GLCD.drowMashiro()
 
+            lock.release()
             time.sleep(1)
     except KeyboardInterrupt:
         GLCD.GLCDDisplayClear()
@@ -145,5 +152,23 @@ class StubHttpRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.wfile.write(encoded)     
+
+    def do_POST(self):
+        content_len = int(self.headers.get('content-length'))
+        requestBody = json.loads(self.rfile.read(content_len).decode('utf-8'))
+
+        if requestBody['number'] == 1:
+            lock.acquire()
+            GLCD.GLCDDisplayClear()
+            lock.release()
+            pushButton()
+
+        response = { 'status' : 200 }
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        responseBody = json.dumps(response)
+
+        self.wfile.write(responseBody.encode('utf-8'))
 
 __main__()
