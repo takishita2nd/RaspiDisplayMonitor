@@ -1,3 +1,7 @@
+import os
+import sys
+import urllib.parse
+import json
 import RPi.GPIO as GPIO
 import time
 import datetime
@@ -5,11 +9,32 @@ import calendar
 import GLCD
 import AM2320
 import Weather
+import threading
+import subprocess
 
+from http.server import BaseHTTPRequestHandler
+from http.server import HTTPServer
+from http import HTTPStatus
+
+PORT = 8000
 sw = False
+
+Humidity = 0
+Temperature = 0
+mode = 1
+lock = threading.Lock()
+
+def pushButton():
+    global mode
+    mode += 1
+    if mode > 4:
+        mode = 1
 
 def __main__():
     global sw
+    global Humidity
+    global Temperature
+
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(22,GPIO.IN) 
     GPIO.add_event_detect(22, GPIO.FALLING, callback=callback, bouncetime=300)
@@ -18,17 +43,27 @@ def __main__():
     GLCD.GLCDDisplayClear()
 
     roop = 10 * 60 * 60
-    mode = 1
+    
+    thread = threading.Thread(target=httpServe)
+    thread.start()
+    
     try:
         while True:
+            lock.acquire()
+            Humidity = AM2320.GetHum()
+            Temperature = AM2320.GetTemp()
+
             if sw == True:
                 GLCD.GLCDDisplayClear()
-                mode += 1
-                if mode > 4:
-                    mode = 1
+                pushButton()
                 sw = False
 
             if mode == 1:
+                GLCD.drowLargeClock(datetime.datetime.now().strftime('%H:%M'))
+                GLCD.GLCDPuts(1, 48, "Humidity    : " + Humidity + '%')
+                GLCD.GLCDPuts(1, 56, "Temperature : " + Temperature + 'C')
+
+            elif mode == 2:
                 if roop >= 10 * 60 * 60:
                     GLCD.GLCDDisplayClear()
                     Weather.RequestAPI()
@@ -42,15 +77,10 @@ def __main__():
                 GLCD.GLCDPuts(10,24, weather)
                 GLCD.GLCDPuts(10,32, "Temp : " + format(temp) + 'C')
                 GLCD.GLCDPuts(1, 40, "Time : " + datetime.datetime.now().strftime('%H:%M'))
-                GLCD.GLCDPuts(1, 48, "Humidity    : " + AM2320.GetHum() + '%')
-                GLCD.GLCDPuts(1, 56, "Temperature : " + AM2320.GetTemp() + 'C')
+                GLCD.GLCDPuts(1, 48, "Humidity    : " + Humidity + '%')
+                GLCD.GLCDPuts(1, 56, "Temperature : " + Temperature + 'C')
 
                 roop += 1
-
-            elif mode == 2:
-                GLCD.drowLargeClock(datetime.datetime.now().strftime('%H:%M'))
-                GLCD.GLCDPuts(1, 48, "Humidity    : " + AM2320.GetHum() + '%')
-                GLCD.GLCDPuts(1, 56, "Temperature : " + AM2320.GetTemp() + 'C')
 
             elif mode == 3:
                 cal = calendar.month(datetime.datetime.now().year, datetime.datetime.now().month)
@@ -63,6 +93,7 @@ def __main__():
             elif mode == 4:
                 GLCD.drowMashiro()
 
+            lock.release()
             time.sleep(1)
     except KeyboardInterrupt:
         GLCD.GLCDDisplayClear()
@@ -71,5 +102,73 @@ def __main__():
 def callback(channel):
     global sw
     sw = True
+
+def httpServe():
+    handler = StubHttpRequestHandler
+    httpd = HTTPServer(('',PORT),handler)
+    httpd.serve_forever()
+
+def getCPUTemp():
+    args = ['vcgencmd', 'measure_temp']
+    res = ""
+    try:
+        res = subprocess.run(args, stdout=subprocess.PIPE)
+    except:
+        return "Error."
+    return res.stdout.decode().split('=')[1].strip().replace('\'C', '℃')
+
+def getGPUTemp():
+    args = ['sudo', '/opt/vc/bin/vcgencmd', 'measure_temp']
+    res = ""
+    try:
+        res = subprocess.run(args, stdout=subprocess.PIPE)
+    except:
+        return "Error."
+    return res.stdout.decode().split('=')[1].strip().replace('\'C', '℃')
+
+
+class StubHttpRequestHandler(BaseHTTPRequestHandler):
+    server_version = "HTTP Stub/0.1"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def do_GET(self):
+        enc = sys.getfilesystemencoding()
+
+        data = {
+            'datetime' : datetime.datetime.now().strftime('%Y:%m:%d %H:%M:%S'),
+            'temperature': Temperature,
+            'humidity': Humidity,
+            'cputemp' : getCPUTemp(),
+            'gputemp' : getGPUTemp()
+        }
+
+        encoded = json.dumps(data).encode()
+
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-type", "text/html; charset=%s" % enc)
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+
+        self.wfile.write(encoded)     
+
+    def do_POST(self):
+        content_len = int(self.headers.get('content-length'))
+        requestBody = json.loads(self.rfile.read(content_len).decode('utf-8'))
+
+        if requestBody['number'] == 1:
+            lock.acquire()
+            GLCD.GLCDDisplayClear()
+            lock.release()
+            pushButton()
+
+        response = { 'status' : 200 }
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        responseBody = json.dumps(response)
+
+        self.wfile.write(responseBody.encode('utf-8'))
 
 __main__()
